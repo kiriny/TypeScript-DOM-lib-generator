@@ -617,8 +617,8 @@ interface TextDecoderOptions {
 }
 
 interface TextEncoderEncodeIntoResult {
-    read?: number;
-    written?: number;
+    read: number;
+    written: number;
 }
 
 interface Transformer<I = any, O = any> {
@@ -1450,6 +1450,8 @@ interface CanvasShadowStyles {
 }
 
 interface CanvasState {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/reset) */
+    reset(): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/restore) */
     restore(): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/save) */
@@ -1533,7 +1535,7 @@ interface CompressionStream extends GenericTransformStream {
 
 declare var CompressionStream: {
     prototype: CompressionStream;
-    new(format: string): CompressionStream;
+    new(format: CompressionFormat): CompressionStream;
 };
 
 /**
@@ -1984,7 +1986,7 @@ interface DecompressionStream extends GenericTransformStream {
 
 declare var DecompressionStream: {
     prototype: DecompressionStream;
-    new(format: string): DecompressionStream;
+    new(format: CompressionFormat): DecompressionStream;
 };
 
 /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/EXT_blend_minmax) */
@@ -2621,7 +2623,9 @@ interface FontFaceSource {
  */
 interface FormData {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/append) */
-    append(name: string, value: string | Blob, fileName?: string): void;
+    append(name: string, value: string | Blob): void;
+    append(name: string, value: string): void;
+    append(name: string, blobValue: Blob, filename?: string): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/delete) */
     delete(name: string): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/get) */
@@ -2631,7 +2635,9 @@ interface FormData {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/has) */
     has(name: string): boolean;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/set) */
-    set(name: string, value: string | Blob, fileName?: string): void;
+    set(name: string, value: string | Blob): void;
+    set(name: string, value: string): void;
+    set(name: string, blobValue: Blob, filename?: string): void;
     forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void;
 }
 
@@ -3621,6 +3627,14 @@ declare var NavigationPreloadManager: {
     prototype: NavigationPreloadManager;
     new(): NavigationPreloadManager;
 };
+
+/** Available only in secure contexts. */
+interface NavigatorBadge {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/clearAppBadge) */
+    clearAppBadge(): Promise<void>;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/setAppBadge) */
+    setAppBadge(contents?: number): Promise<void>;
+}
 
 interface NavigatorConcurrentHardware {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/hardwareConcurrency) */
@@ -4625,7 +4639,6 @@ interface ServiceWorkerContainer extends EventTarget {
     oncontrollerchange: ((this: ServiceWorkerContainer, ev: Event) => any) | null;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorkerContainer/message_event) */
     onmessage: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
-    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorkerContainer/messageerror_event) */
     onmessageerror: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorkerContainer/ready) */
     readonly ready: Promise<ServiceWorkerRegistration>;
@@ -7722,7 +7735,7 @@ declare var WorkerLocation: {
  *
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/WorkerNavigator)
  */
-interface WorkerNavigator extends NavigatorConcurrentHardware, NavigatorID, NavigatorLanguage, NavigatorLocks, NavigatorOnLine, NavigatorStorage {
+interface WorkerNavigator extends NavigatorBadge, NavigatorConcurrentHardware, NavigatorID, NavigatorLanguage, NavigatorLocks, NavigatorOnLine, NavigatorStorage {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/WorkerNavigator/mediaCapabilities) */
     readonly mediaCapabilities: MediaCapabilities;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/WorkerNavigator/permissions) */
@@ -8042,16 +8055,16 @@ declare namespace WebAssembly {
     };
 
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Global) */
-    interface Global {
+    interface Global<T extends ValueType = ValueType> {
         /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Global/value) */
-        value: any;
+        value: ValueTypeMap[T];
         /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Global/valueOf) */
-        valueOf(): any;
+        valueOf(): ValueTypeMap[T];
     }
 
     var Global: {
         prototype: Global;
-        new(descriptor: GlobalDescriptor, v?: any): Global;
+        new<T extends ValueType = ValueType>(descriptor: GlobalDescriptor<T>, v?: ValueTypeMap[T]): Global<T>;
     };
 
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Instance) */
@@ -8128,9 +8141,9 @@ declare namespace WebAssembly {
         new(descriptor: TableDescriptor, value?: any): Table;
     };
 
-    interface GlobalDescriptor {
+    interface GlobalDescriptor<T extends ValueType = ValueType> {
         mutable?: boolean;
-        value: ValueType;
+        value: T;
     }
 
     interface MemoryDescriptor {
@@ -8156,6 +8169,16 @@ declare namespace WebAssembly {
         maximum?: number;
     }
 
+    interface ValueTypeMap {
+        anyfunc: Function;
+        externref: any;
+        f32: number;
+        f64: number;
+        i32: number;
+        i64: bigint;
+        v128: never;
+    }
+
     interface WebAssemblyInstantiatedSource {
         instance: Instance;
         module: Module;
@@ -8163,12 +8186,12 @@ declare namespace WebAssembly {
 
     type ImportExportKind = "function" | "global" | "memory" | "table";
     type TableKind = "anyfunc" | "externref";
-    type ValueType = "anyfunc" | "externref" | "f32" | "f64" | "i32" | "i64" | "v128";
     type ExportValue = Function | Global | Memory | Table;
     type Exports = Record<string, ExportValue>;
     type ImportValue = ExportValue | number;
     type Imports = Record<string, ModuleImports>;
     type ModuleImports = Record<string, ImportValue>;
+    type ValueType = keyof ValueTypeMap;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/compile) */
     function compile(bytes: BufferSource): Promise<Module>;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/compileStreaming) */
@@ -8419,6 +8442,7 @@ type CanvasTextRendering = "auto" | "geometricPrecision" | "optimizeLegibility" 
 type ClientTypes = "all" | "sharedworker" | "window" | "worker";
 type ColorGamut = "p3" | "rec2020" | "srgb";
 type ColorSpaceConversion = "default" | "none";
+type CompressionFormat = "deflate" | "deflate-raw" | "gzip";
 type EndingType = "native" | "transparent";
 type FileSystemHandleKind = "directory" | "file";
 type FontDisplay = "auto" | "block" | "fallback" | "optional" | "swap";

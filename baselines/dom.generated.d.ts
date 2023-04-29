@@ -732,6 +732,7 @@ interface Keyframe {
 
 interface KeyframeAnimationOptions extends KeyframeEffectOptions {
     id?: string;
+    timeline?: AnimationTimeline | null;
 }
 
 interface KeyframeEffectOptions extends EffectTiming {
@@ -1501,19 +1502,18 @@ interface RTCRtpCapabilities {
     headerExtensions: RTCRtpHeaderExtensionCapability[];
 }
 
-interface RTCRtpCodecCapability {
+interface RTCRtpCodec {
     channels?: number;
     clockRate: number;
     mimeType: string;
     sdpFmtpLine?: string;
 }
 
-interface RTCRtpCodecParameters {
-    channels?: number;
-    clockRate: number;
-    mimeType: string;
+interface RTCRtpCodecCapability extends RTCRtpCodec {
+}
+
+interface RTCRtpCodecParameters extends RTCRtpCodec {
     payloadType: number;
-    sdpFmtpLine?: string;
 }
 
 interface RTCRtpCodingParameters {
@@ -1537,7 +1537,7 @@ interface RTCRtpEncodingParameters extends RTCRtpCodingParameters {
 }
 
 interface RTCRtpHeaderExtensionCapability {
-    uri?: string;
+    uri: string;
 }
 
 interface RTCRtpHeaderExtensionParameters {
@@ -1854,8 +1854,8 @@ interface TextDecoderOptions {
 }
 
 interface TextEncoderEncodeIntoResult {
-    read?: number;
-    written?: number;
+    read: number;
+    written: number;
 }
 
 interface TouchEventInit extends EventModifierInit {
@@ -3779,6 +3779,8 @@ interface CSSStyleDeclaration {
     all: string;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/CSS/animation) */
     animation: string;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/CSS/animation-composition) */
+    animationComposition: string;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/CSS/animation-delay) */
     animationDelay: string;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/CSS/animation-direction) */
@@ -5419,6 +5421,8 @@ interface CanvasShadowStyles {
 }
 
 interface CanvasState {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/reset) */
+    reset(): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/restore) */
     restore(): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/save) */
@@ -5688,7 +5692,7 @@ interface CompressionStream extends GenericTransformStream {
 
 declare var CompressionStream: {
     prototype: CompressionStream;
-    new(format: string): CompressionStream;
+    new(format: CompressionFormat): CompressionStream;
 };
 
 /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ConstantSourceNode) */
@@ -6562,7 +6566,7 @@ interface DecompressionStream extends GenericTransformStream {
 
 declare var DecompressionStream: {
     prototype: DecompressionStream;
-    new(format: string): DecompressionStream;
+    new(format: CompressionFormat): DecompressionStream;
 };
 
 /**
@@ -6923,7 +6927,11 @@ interface Document extends Node, DocumentOrShadowRoot, FontFaceSource, GlobalEve
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Document/referrer)
      */
     readonly referrer: string;
-    /** @deprecated */
+    /**
+     * @deprecated
+     *
+     * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Document/rootElement)
+     */
     readonly rootElement: SVGSVGElement | null;
     /**
      * Retrieves a collection of all script objects in the document.
@@ -8543,7 +8551,9 @@ interface FontFaceSource {
  */
 interface FormData {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/append) */
-    append(name: string, value: string | Blob, fileName?: string): void;
+    append(name: string, value: string | Blob): void;
+    append(name: string, value: string): void;
+    append(name: string, blobValue: Blob, filename?: string): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/delete) */
     delete(name: string): void;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/get) */
@@ -8553,7 +8563,9 @@ interface FormData {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/has) */
     has(name: string): boolean;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/set) */
-    set(name: string, value: string | Blob, fileName?: string): void;
+    set(name: string, value: string | Blob): void;
+    set(name: string, value: string): void;
+    set(name: string, blobValue: Blob, filename?: string): void;
     forEach(callbackfn: (value: FormDataEntryValue, key: string, parent: FormData) => void, thisArg?: any): void;
 }
 
@@ -15766,7 +15778,7 @@ declare var NavigationPreloadManager: {
  *
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator)
  */
-interface Navigator extends NavigatorAutomationInformation, NavigatorConcurrentHardware, NavigatorContentUtils, NavigatorCookies, NavigatorID, NavigatorLanguage, NavigatorLocks, NavigatorOnLine, NavigatorPlugins, NavigatorStorage {
+interface Navigator extends NavigatorAutomationInformation, NavigatorBadge, NavigatorConcurrentHardware, NavigatorContentUtils, NavigatorCookies, NavigatorID, NavigatorLanguage, NavigatorLocks, NavigatorOnLine, NavigatorPlugins, NavigatorStorage {
     /**
      * Available only in secure contexts.
      *
@@ -15846,6 +15858,14 @@ declare var Navigator: {
 interface NavigatorAutomationInformation {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/webdriver) */
     readonly webdriver: boolean;
+}
+
+/** Available only in secure contexts. */
+interface NavigatorBadge {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/clearAppBadge) */
+    clearAppBadge(): Promise<void>;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/Navigator/setAppBadge) */
+    setAppBadge(contents?: number): Promise<void>;
 }
 
 interface NavigatorConcurrentHardware {
@@ -21075,7 +21095,6 @@ interface ServiceWorkerContainer extends EventTarget {
     oncontrollerchange: ((this: ServiceWorkerContainer, ev: Event) => any) | null;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorkerContainer/message_event) */
     onmessage: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
-    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorkerContainer/messageerror_event) */
     onmessageerror: ((this: ServiceWorkerContainer, ev: MessageEvent) => any) | null;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ServiceWorkerContainer/ready) */
     readonly ready: Promise<ServiceWorkerRegistration>;
@@ -21157,6 +21176,7 @@ interface ShadowRoot extends DocumentFragment, DocumentOrShadowRoot, InnerHTML {
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ShadowRoot/mode) */
     readonly mode: ShadowRootMode;
     onslotchange: ((this: ShadowRoot, ev: Event) => any) | null;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/ShadowRoot/slotAssignment) */
     readonly slotAssignment: SlotAssignmentMode;
     /** Throws a "NotSupportedError" DOMException if context object is a shadow root. */
     addEventListener<K extends keyof ShadowRootEventMap>(type: K, listener: (this: ShadowRoot, ev: ShadowRootEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
@@ -26362,16 +26382,16 @@ declare namespace WebAssembly {
     };
 
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Global) */
-    interface Global {
+    interface Global<T extends ValueType = ValueType> {
         /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Global/value) */
-        value: any;
+        value: ValueTypeMap[T];
         /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Global/valueOf) */
-        valueOf(): any;
+        valueOf(): ValueTypeMap[T];
     }
 
     var Global: {
         prototype: Global;
-        new(descriptor: GlobalDescriptor, v?: any): Global;
+        new<T extends ValueType = ValueType>(descriptor: GlobalDescriptor<T>, v?: ValueTypeMap[T]): Global<T>;
     };
 
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/Instance) */
@@ -26448,9 +26468,9 @@ declare namespace WebAssembly {
         new(descriptor: TableDescriptor, value?: any): Table;
     };
 
-    interface GlobalDescriptor {
+    interface GlobalDescriptor<T extends ValueType = ValueType> {
         mutable?: boolean;
-        value: ValueType;
+        value: T;
     }
 
     interface MemoryDescriptor {
@@ -26476,6 +26496,16 @@ declare namespace WebAssembly {
         maximum?: number;
     }
 
+    interface ValueTypeMap {
+        anyfunc: Function;
+        externref: any;
+        f32: number;
+        f64: number;
+        i32: number;
+        i64: bigint;
+        v128: never;
+    }
+
     interface WebAssemblyInstantiatedSource {
         instance: Instance;
         module: Module;
@@ -26483,12 +26513,12 @@ declare namespace WebAssembly {
 
     type ImportExportKind = "function" | "global" | "memory" | "table";
     type TableKind = "anyfunc" | "externref";
-    type ValueType = "anyfunc" | "externref" | "f32" | "f64" | "i32" | "i64" | "v128";
     type ExportValue = Function | Global | Memory | Table;
     type Exports = Record<string, ExportValue>;
     type ImportValue = ExportValue | number;
     type Imports = Record<string, ModuleImports>;
     type ModuleImports = Record<string, ImportValue>;
+    type ValueType = keyof ValueTypeMap;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/compile) */
     function compile(bytes: BufferSource): Promise<Module>;
     /** [MDN Reference](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WebAssembly/compileStreaming) */
@@ -27806,6 +27836,7 @@ type ColorGamut = "p3" | "rec2020" | "srgb";
 type ColorSpaceConversion = "default" | "none";
 type CompositeOperation = "accumulate" | "add" | "replace";
 type CompositeOperationOrAuto = "accumulate" | "add" | "auto" | "replace";
+type CompressionFormat = "deflate" | "deflate-raw" | "gzip";
 type CredentialMediationRequirement = "conditional" | "optional" | "required" | "silent";
 type DOMParserSupportedType = "application/xhtml+xml" | "application/xml" | "image/svg+xml" | "text/html" | "text/xml";
 type DirectionSetting = "" | "lr" | "rl";
