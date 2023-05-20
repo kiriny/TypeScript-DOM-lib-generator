@@ -223,7 +223,7 @@ interface AbortSignal extends EventTarget {
 declare var AbortSignal: {
     prototype: AbortSignal;
     new(): AbortSignal;
-    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/AbortSignal/abort) */
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/AbortSignal/abort_static) */
     abort(reason?: any): AbortSignal;
 };
 
@@ -1015,6 +1015,8 @@ declare var URL: {
 
 /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/URLSearchParams) */
 interface URLSearchParams {
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/URLSearchParams/size) */
+    readonly size: number;
     /**
      * Appends a specified key/value pair as a new search parameter.
      *
@@ -1026,7 +1028,7 @@ interface URLSearchParams {
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/URLSearchParams/delete)
      */
-    delete(name: string): void;
+    delete(name: string, value?: string): void;
     /**
      * Returns the first value associated to the given search parameter.
      *
@@ -1044,7 +1046,7 @@ interface URLSearchParams {
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/URLSearchParams/has)
      */
-    has(name: string): boolean;
+    has(name: string, value?: string): boolean;
     /**
      * Sets the value associated to a given search parameter to the given value. If there were several values, delete the others.
      *
