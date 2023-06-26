@@ -858,7 +858,7 @@ interface TextDecoder extends TextDecoderCommon {
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/TextDecoder/decode)
      */
-    decode(input?: BufferSource, options?: TextDecodeOptions): string;
+    decode(input?: AllowSharedBufferSource, options?: TextDecodeOptions): string;
 }
 
 declare var TextDecoder: {
@@ -1011,6 +1011,8 @@ interface URL {
 declare var URL: {
     prototype: URL;
     new(url: string | URL, base?: string | URL): URL;
+    /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/URL/canParse_static) */
+    canParse(url: string | URL, base?: string): boolean;
 };
 
 /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/URLSearchParams) */
@@ -1397,6 +1399,7 @@ declare var currentTime: number;
 declare var sampleRate: number;
 /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/AudioWorkletGlobalScope/registerProcessor) */
 declare function registerProcessor(name: string, processorCtor: AudioWorkletProcessorConstructor): void;
+type AllowSharedBufferSource = ArrayBuffer | ArrayBufferView;
 type BufferSource = ArrayBufferView | ArrayBuffer;
 type DOMHighResTimeStamp = number;
 type EventListenerOrEventListenerObject = EventListener | EventListenerObject;
