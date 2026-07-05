@@ -1,8 +1,7 @@
 import * as webidl2 from "webidl2";
-import * as Browser from "./types.js";
-import { getEmptyWebIDL } from "./helpers.js";
+import * as Browser from "./types.ts";
+import { getEmptyWebIDL } from "./helpers.ts";
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function convert(text: string, commentMap: Record<string, string>) {
   const rootTypes = webidl2.parse(text);
   const partialInterfaces: Browser.Interface[] = [];
@@ -120,7 +119,6 @@ function convertInterfaceMixin(
 ) {
   const result = convertInterfaceCommon(i, commentMap);
   result.mixin = true;
-  result.noInterfaceObject = true;
   return result;
 }
 
@@ -192,7 +190,7 @@ function convertInterfaceCommon(
       }
     } else if (member.type === "operation") {
       const operation = convertOperation(member, result.exposed);
-      const { method } = result.methods;
+      const { method } = result.methods!;
       if (!member.name) {
         result.anonymousMethods!.method.push(operation);
       } else if (method.hasOwnProperty(member.name)) {
@@ -204,16 +202,26 @@ function convertInterfaceCommon(
         addComments(method[member.name], commentMap, i.name, member.name);
       }
     } else if (
+      (member.type as string) === "async_iterable" ||
       member.type === "iterable" ||
       member.type === "maplike" ||
       member.type === "setlike"
     ) {
+      // TODO(saschanaz): @types/webidl2 doesn't support async_iterable
+      const iterableLike = member as
+        | webidl2.IterableDeclarationMemberType
+        | webidl2.MaplikeDeclarationMemberType
+        | webidl2.SetlikeDeclarationMemberType;
+      // Compatibility between `async_iterable` and `async iterable`
+      const kind =
+        iterableLike.type === "iterable" && iterableLike.async
+          ? "async_iterable"
+          : iterableLike.type;
       result.iterator = {
-        kind: member.type,
-        readonly: member.readonly,
-        async: member.async,
-        param: member.arguments.map(convertArgument),
-        type: member.idlType.map(convertIdlType),
+        kind,
+        readonly: iterableLike.readonly,
+        param: iterableLike.arguments.map(convertArgument),
+        type: iterableLike.idlType.map(convertIdlType),
       };
     }
   }
@@ -341,6 +349,7 @@ function convertArgument(arg: webidl2.Argument): Browser.Param {
     ...idlType,
     optional: arg.optional,
     variadic: arg.variadic,
+    allowShared: hasExtAttr(arg.extAttrs, "AllowShared"),
   };
 }
 
@@ -363,6 +372,7 @@ function convertAttribute(
       inheritedExposure,
     putForwards: getExtAttr(attribute.extAttrs, "PutForwards")[0],
     secureContext: hasExtAttr(attribute.extAttrs, "SecureContext"),
+    allowShared: hasExtAttr(attribute.extAttrs, "AllowShared"),
   };
 }
 
@@ -402,6 +412,7 @@ function convertNamespace(
 ) {
   const result: Browser.Interface = {
     name: namespace.name,
+    constants: { constant: {} },
     namespace: true,
     constructor: { signature: [] },
     methods: { method: {} },
@@ -409,7 +420,15 @@ function convertNamespace(
     exposed: getExtAttrConcatenated(namespace.extAttrs, "Exposed"),
   };
   for (const member of namespace.members) {
-    if (member.type === "attribute") {
+    if (member.type === "const") {
+      result.constants!.constant[member.name] = convertConstantMember(member);
+      addComments(
+        result.constants!.constant[member.name],
+        commentMap,
+        namespace.name,
+        member.name,
+      );
+    } else if (member.type === "attribute") {
       result.properties!.property[member.name] = convertAttribute(
         member,
         result.exposed,
@@ -422,7 +441,7 @@ function convertNamespace(
       );
     } else if (member.type === "operation" && member.idlType) {
       const operation = convertOperation(member, result.exposed);
-      const { method } = result.methods;
+      const { method } = result.methods!;
       if (method[member.name!]) {
         method[member.name!].signature.push(...operation.signature);
       } else {
@@ -496,6 +515,7 @@ function convertIdlType(i: webidl2.IDLTypeDescription): Browser.Typed {
     return {
       type: i.idlType,
       nullable: i.nullable,
+      allowShared: hasExtAttr(i.extAttrs, "AllowShared"),
     };
   }
   if (i.generic) {

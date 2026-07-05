@@ -2,19 +2,21 @@
 
 > The Worker interface of the Web Workers API represents a background task that can be created via script, which can send messages back to its creator. Creating a worker is done by calling the `Worker("path/to/worker/script")` constructor.
 
-From [MDN Web Docs: Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Worker)
+From [MDN Web Docs: Worker API](https://developer.mozilla.org/docs/Web/API/Worker)
 
 This package contains type definitions which will set up the global environment for your TypeScript project to match the runtime environment of a Web Worker. The APIs inside `@types/webworker` are [generated from](https://github.com/microsoft/TypeScript-DOM-lib-generator/) the specifications for JavaScript.
 
 ## Installation 
 
-With TypeScript 4.5+ using [lib replacement](https://github.com/microsoft/TypeScript/pull/45771), you can swap the WebWorker lib with this dependency:
+With TypeScript 4.5+ using [lib replacement](https://www.typescriptlang.org/tsconfig/#libReplacement), you can swap the WebWorker lib with this dependency:
 
 ```sh
 pnpm add @typescript/lib-webworker@npm:@types/webworker --save-dev
 npm install @typescript/lib-webworker@npm:@types/webworker --save-dev
 yarn add @typescript/lib-webworker@npm:@types/webworker --dev
 ```
+
+If you are using TypeScript 6.0+, set [`libReplacement`](https://www.typescriptlang.org/tsconfig/#libReplacement) to `true` in your `tsconfig.json`.
 
 That's all. 
 

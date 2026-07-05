@@ -1,17 +1,20 @@
-import * as Browser from "./build/types.js";
+import type * as Browser from "./build/types.ts";
 import { promises as fs } from "fs";
-import { merge, resolveExposure, arrayToMap } from "./build/helpers.js";
-import { emitWebIdl } from "./build/emitter.js";
-import { convert } from "./build/widlprocess.js";
-import { getExposedTypes } from "./build/expose.js";
+import { merge, resolveExposure, arrayToMap } from "./build/helpers.ts";
+import { type CompilerBehavior, emitWebIdl } from "./build/emitter.ts";
+import { convert } from "./build/widlprocess.ts";
+import { getExposedTypes } from "./build/expose.ts";
 import {
   getDeprecationData,
   getDocsData,
   getRemovalData,
-} from "./build/bcd.js";
-import { getInterfaceElementMergeData } from "./build/webref/elements.js";
-import { getWebidls } from "./build/webref/idl.js";
+} from "./build/bcd.ts";
+import { getInterfaceElementMergeData } from "./build/webref/elements.ts";
+import { getInterfaceToEventMap } from "./build/webref/events.ts";
+import { getWebidls } from "./build/webref/idl.ts";
 import jsonc from "jsonc-parser";
+import { generateDescriptions } from "./build/mdn-comments.ts";
+import readPatches from "./build/patches.ts";
 
 function mergeNamesakes(filtered: Browser.WebIdl) {
   const targets = [
@@ -36,6 +39,7 @@ interface EmitOptions {
   global: string[];
   name: string;
   outputFolder: URL;
+  compilerBehavior: CompilerBehavior;
 }
 
 async function emitFlavor(
@@ -45,26 +49,37 @@ async function emitFlavor(
 ) {
   const exposed = getExposedTypes(webidl, options.global, forceKnownTypes);
   mergeNamesakes(exposed);
+  exposed.events = webidl.events;
 
-  const result = emitWebIdl(exposed, options.global[0], "");
-  await fs.writeFile(
-    new URL(`${options.name}.generated.d.ts`, options.outputFolder),
-    result,
-  );
+  // Iterator types in separate files as the default target doesn't understand iterators (for TS 6.0-)
+  const outputs = [
+    {
+      suffix: ".generated.d.ts",
+      iterator: "",
+    },
+    {
+      suffix: ".iterable.generated.d.ts",
+      iterator: "sync",
+    },
+    {
+      suffix: ".asynciterable.generated.d.ts",
+      iterator: "async",
+    },
+  ] as const;
 
-  const iterators = emitWebIdl(exposed, options.global[0], "sync");
-  await fs.writeFile(
-    new URL(`${options.name}.iterable.generated.d.ts`, options.outputFolder),
-    iterators,
-  );
-
-  const asyncIterators = emitWebIdl(exposed, options.global[0], "async");
-  await fs.writeFile(
-    new URL(
-      `${options.name}.asynciterable.generated.d.ts`,
-      options.outputFolder,
-    ),
-    asyncIterators,
+  await Promise.all(
+    outputs.map(async ({ suffix, iterator }) => {
+      const content = emitWebIdl(
+        exposed,
+        options.global[0],
+        iterator,
+        options.compilerBehavior,
+      );
+      await fs.writeFile(
+        new URL(`${options.name}${suffix}`, options.outputFolder),
+        content,
+      );
+    }),
   );
 }
 
@@ -72,39 +87,11 @@ async function emitDom() {
   const inputFolder = new URL("../inputfiles/", import.meta.url);
   const outputFolder = new URL("../generated/", import.meta.url);
 
-  // ${name} will be substituted with the name of an interface
-  const removeVerboseIntroductions: [RegExp, string][] = [
-    [
-      /^(The|A) ${name} interface of (the\s*)*((?:(?!API)[A-Za-z\d\s])+ API)/,
-      "This $3 interface ",
-    ],
-    [
-      /^(The|A) ${name} (interface|event|object) (is|represents|describes|defines)?/,
-      "",
-    ],
-    [
-      /^An object implementing the ${name} interface (is|represents|describes|defines)/,
-      "",
-    ],
-    [/^The ${name} is an interface representing/, ""],
-    [/^This type (is|represents|describes|defines)?/, ""],
-    [
-      /^The (((?:(?!API)[A-Za-z\s])+ API)) ${name} (represents|is|describes|defines)/,
-      "The $1 ",
-    ],
-  ];
-
-  // Create output folder
-  await fs.mkdir(outputFolder, {
-    // Doesn't need to be recursive, but this helpfully ignores EEXIST
-    recursive: true,
-  });
-
   const overriddenItems = await readInputJSON("overridingTypes.jsonc");
   const addedItems = await readInputJSON("addedTypes.jsonc");
+  const { patches, removalPatches } = await readPatches();
   const comments = await readInputJSON("comments.json");
-  const deprecatedInfo = await readInputJSON("deprecatedMessage.json");
-  const documentationFromMDN = await readInputJSON("mdn/apiDescriptions.json");
+  const documentationFromMDN = await generateDescriptions();
   const removedItems = await readInputJSON("removedTypes.jsonc");
 
   async function readInputJSON(filename: string) {
@@ -116,20 +103,6 @@ async function emitDom() {
     await Promise.all([...(await getWebidls()).entries()].map(convertWidl))
   ).filter((i) => i) as ReturnType<typeof convert>[];
 
-  const transferables = widlStandardTypes.flatMap((st) => {
-    return Object.values(st.browser.interfaces?.interface ?? {}).filter(
-      (i) => i.transferable,
-    );
-  });
-
-  addedItems.typedefs.typedef.push({
-    name: "Transferable",
-    type: [
-      ...transferables.map((v) => ({ type: v.name })),
-      { type: "ArrayBuffer" },
-    ],
-  });
-
   async function convertWidl([shortName, idl]: string[]) {
     let commentsMap: Record<string, string>;
     try {
@@ -137,74 +110,40 @@ async function emitDom() {
     } catch {
       commentsMap = {};
     }
-    commentCleanup(commentsMap);
     const result = convert(idl, commentsMap);
     return result;
   }
 
-  function commentCleanup(commentsMap: Record<string, string>) {
-    for (const key in commentsMap) {
-      // Filters out phrases for nested comments as we retargets them:
-      // "This operation receives a dictionary, which has these members:"
-      commentsMap[key] = commentsMap[key].replace(/[,.][^,.]+:$/g, ".");
-    }
-  }
-
   function mergeApiDescriptions(
     idl: Browser.WebIdl,
-    descriptions: Record<string, string>,
+    descriptions: { interfaces: { interface: Record<string, any> } },
   ) {
     const namespaces = arrayToMap(
       idl.namespaces!,
       (i) => i.name,
       (i) => i,
     );
-    for (const [key, value] of Object.entries(descriptions)) {
-      const target = idl.interfaces!.interface[key] || namespaces[key];
-      if (target && !value.startsWith("REDIRECT")) {
-        target.comment = transformVerbosity(key, value);
+
+    for (const [key, target] of Object.entries(namespaces)) {
+      const descObject = descriptions.interfaces.interface[key];
+      if (!descObject) {
+        continue;
       }
+
+      merge(target, descObject, { optional: true });
     }
+    idl = merge(idl, descriptions, { optional: true });
+
     return idl;
-  }
-
-  function mergeDeprecatedMessage(
-    idl: Browser.WebIdl,
-    descriptions: Record<string, string>,
-  ) {
-    const namespaces = arrayToMap(
-      idl.namespaces!,
-      (i) => i.name,
-      (i) => i,
-    );
-    for (const [key, value] of Object.entries(descriptions)) {
-      const target = idl.interfaces!.interface[key] || namespaces[key];
-      if (target) {
-        target.deprecated = transformVerbosity(key, value);
-      }
-    }
-    return idl;
-  }
-
-  function transformVerbosity(name: string, description: string): string {
-    for (const regTemplate of removeVerboseIntroductions) {
-      const [{ source: template }, replace] = regTemplate;
-
-      const reg = new RegExp(template.replace(/\$\{name\}/g, name) + "\\s*");
-      const product = description.replace(reg, replace);
-      if (product !== description) {
-        return product.charAt(0).toUpperCase() + product.slice(1);
-      }
-    }
-
-    return description;
   }
 
   /// Load the input file
-  let webidl: Browser.WebIdl = {};
+  let webidl: Browser.WebIdl = {
+    events: await getInterfaceToEventMap(),
+  };
 
   for (const w of widlStandardTypes) {
-    webidl = merge(webidl, w.browser, true);
+    webidl = merge(webidl, w.browser, { shallow: true });
   }
   for (const w of widlStandardTypes) {
     for (const partial of w.partialInterfaces) {
@@ -213,33 +152,39 @@ async function emitDom() {
         webidl.interfaces!.interface[partial.name] ||
         webidl.mixins!.mixin[partial.name];
       if (base) {
-        if (base.exposed) resolveExposure(partial, base.exposed);
-        merge(base.constants, partial.constants, true);
-        merge(base.methods, partial.methods, true);
-        merge(base.properties, partial.properties, true);
+        if (base.exposed) {
+          resolveExposure(partial, base.exposed);
+        }
+        merge(base.constants, partial.constants, { shallow: true });
+        merge(base.methods, partial.methods, { shallow: true });
+        merge(base.properties, partial.properties, { shallow: true });
       }
     }
     for (const partial of w.partialMixins) {
       const base = webidl.mixins!.mixin[partial.name];
       if (base) {
-        if (base.exposed) resolveExposure(partial, base.exposed);
-        merge(base.constants, partial.constants, true);
-        merge(base.methods, partial.methods, true);
-        merge(base.properties, partial.properties, true);
+        if (base.exposed) {
+          resolveExposure(partial, base.exposed);
+        }
+        merge(base.constants, partial.constants, { shallow: true });
+        merge(base.methods, partial.methods, { shallow: true });
+        merge(base.properties, partial.properties, { shallow: true });
       }
     }
     for (const partial of w.partialDictionaries) {
       const base = webidl.dictionaries!.dictionary[partial.name];
       if (base) {
-        merge(base.members, partial.members, true);
+        merge(base.members, partial.members, { shallow: true });
       }
     }
     for (const partial of w.partialNamespaces) {
       const base = webidl.namespaces?.find((n) => n.name === partial.name);
       if (base) {
-        if (base.exposed) resolveExposure(partial, base.exposed);
-        merge(base.methods, partial.methods, true);
-        merge(base.properties, partial.properties, true);
+        if (base.exposed) {
+          resolveExposure(partial, base.exposed);
+        }
+        merge(base.methods, partial.methods, { shallow: true });
+        merge(base.properties, partial.properties, { shallow: true });
       }
     }
     for (const include of w.includes) {
@@ -259,11 +204,12 @@ async function emitDom() {
   webidl = merge(webidl, getRemovalData(webidl));
   webidl = merge(webidl, getDocsData(webidl));
   webidl = prune(webidl, removedItems);
-  webidl = mergeApiDescriptions(webidl, documentationFromMDN);
+  webidl = prune(webidl, removalPatches);
   webidl = merge(webidl, addedItems);
   webidl = merge(webidl, overriddenItems);
+  webidl = merge(webidl, patches);
   webidl = merge(webidl, comments);
-  webidl = mergeDeprecatedMessage(webidl, deprecatedInfo);
+  webidl = mergeApiDescriptions(webidl, documentationFromMDN);
   for (const name in webidl.interfaces!.interface) {
     const i = webidl.interfaces!.interface[name];
     if (i.overrideExposed) {
@@ -271,33 +217,107 @@ async function emitDom() {
     }
   }
 
+  const transferables = Object.values(
+    webidl.interfaces?.interface ?? {},
+  ).filter((i) => i.transferable);
+
+  webidl = merge(webidl, {
+    typedefs: {
+      typedef: [
+        {
+          name: "Transferable",
+          type: [
+            ...transferables.map((v) => ({ type: v.name })),
+            { type: "ArrayBuffer" },
+          ],
+        },
+      ],
+    },
+  });
+
   const knownTypes = await readInputJSON("knownTypes.json");
 
-  emitFlavor(webidl, new Set(knownTypes.Window), {
-    name: "dom",
-    global: ["Window"],
-    outputFolder,
-  });
-  emitFlavor(webidl, new Set(knownTypes.Worker), {
-    name: "webworker",
-    global: ["Worker", "DedicatedWorker", "SharedWorker", "ServiceWorker"],
-    outputFolder,
-  });
-  emitFlavor(webidl, new Set(knownTypes.Worker), {
-    name: "sharedworker",
-    global: ["SharedWorker", "Worker"],
-    outputFolder,
-  });
-  emitFlavor(webidl, new Set(knownTypes.Worker), {
-    name: "serviceworker",
-    global: ["ServiceWorker", "Worker"],
-    outputFolder,
-  });
-  emitFlavor(webidl, new Set(knownTypes.Worklet), {
-    name: "audioworklet",
-    global: ["AudioWorklet", "Worklet"],
-    outputFolder,
-  });
+  interface Variation {
+    outputFolder: URL;
+    compilerBehavior: CompilerBehavior;
+  }
+
+  const emitVariations: Variation[] = [
+    // ts6.0 (and later)
+    // - iterable and asynciterable brought into the main output
+    {
+      outputFolder,
+      compilerBehavior: {
+        useIteratorObject: true,
+        allowUnrelatedSetterType: true,
+        useGenericTypedArrays: true,
+        includeIterable: true,
+      },
+    },
+    // ts5.7 (and later)
+    // - introduced generic typed arrays over `ArrayBufferLike`
+    {
+      outputFolder: new URL("./ts5.9/", outputFolder),
+      compilerBehavior: {
+        useIteratorObject: true,
+        allowUnrelatedSetterType: true,
+        useGenericTypedArrays: true,
+      },
+    },
+    // ts5.6
+    // - introduced support for `IteratorObject`/Iterator helpers and unrelated setter types
+    {
+      outputFolder: new URL("./ts5.6/", outputFolder),
+      compilerBehavior: {
+        useIteratorObject: true,
+        allowUnrelatedSetterType: true,
+      },
+    },
+    // ts5.5 (and earlier)
+    {
+      outputFolder: new URL("./ts5.5/", outputFolder),
+      compilerBehavior: {}, // ts5.5 does not support `IteratorObject` or unrelated setter types
+    },
+  ];
+
+  for (const { outputFolder, compilerBehavior } of emitVariations) {
+    // Create output folder
+    await fs.mkdir(outputFolder, {
+      // Doesn't need to be recursive, but this helpfully ignores EEXIST
+      recursive: true,
+    });
+
+    emitFlavor(webidl, new Set(knownTypes.Window), {
+      name: "dom",
+      global: ["Window"],
+      outputFolder,
+      compilerBehavior,
+    });
+    emitFlavor(webidl, new Set(knownTypes.Worker), {
+      name: "webworker",
+      global: ["Worker", "DedicatedWorker", "SharedWorker", "ServiceWorker"],
+      outputFolder,
+      compilerBehavior,
+    });
+    emitFlavor(webidl, new Set(knownTypes.Worker), {
+      name: "sharedworker",
+      global: ["SharedWorker", "Worker"],
+      outputFolder,
+      compilerBehavior,
+    });
+    emitFlavor(webidl, new Set(knownTypes.Worker), {
+      name: "serviceworker",
+      global: ["ServiceWorker", "Worker"],
+      outputFolder,
+      compilerBehavior,
+    });
+    emitFlavor(webidl, new Set(knownTypes.Worklet), {
+      name: "audioworklet",
+      global: ["AudioWorklet", "Worklet"],
+      outputFolder,
+      compilerBehavior,
+    });
+  }
 
   function prune(
     obj: Browser.WebIdl,
@@ -306,7 +326,9 @@ async function emitDom() {
     return filterByNull(obj, template);
 
     function filterByNull(obj: any, template: any) {
-      if (!template) return obj;
+      if (!template) {
+        return obj;
+      }
       const filtered = Array.isArray(obj) ? obj.slice(0) : { ...obj };
       for (const k in template) {
         if (!obj[k]) {

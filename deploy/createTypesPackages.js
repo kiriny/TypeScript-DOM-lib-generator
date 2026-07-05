@@ -1,8 +1,6 @@
 // @ts-check
 // node deploy/createTypesPackages.js
 
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-
 /**
  * @template T
  * @typedef {T extends (infer U)[] ? U : T} ArrayInner
@@ -17,8 +15,18 @@ export const packages = [
     description: "Types for the DOM, and other web technologies in browsers",
     readme: "./readmes/web.md",
     files: [
-      { from: "../generated/dom.generated.d.ts", to: "index.d.ts" },
+      { from: "../generated/dom.generated.d.ts", to: "index.d.ts", index: true },
       { from: "../generated/dom.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true },
+      { from: "../generated/dom.asynciterable.generated.d.ts", to: "asynciterable.d.ts", autoImport: true },
+      { from: "../generated/ts5.5/dom.generated.d.ts", to: "ts5.5/index.d.ts", index: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/dom.iterable.generated.d.ts", to: "ts5.5/iterable.d.ts", autoImport: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/dom.asynciterable.generated.d.ts", to: "ts5.5/asynciterable.d.ts", autoImport: true, group: "ts5.5" },
+      { from: "../generated/ts5.6/dom.generated.d.ts", to: "ts5.6/index.d.ts", index: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/dom.iterable.generated.d.ts", to: "ts5.6/iterable.d.ts", autoImport: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/dom.asynciterable.generated.d.ts", to: "ts5.6/asynciterable.d.ts", autoImport: true, group: "ts5.6" },
+      { from: "../generated/ts5.9/dom.generated.d.ts", to: "ts5.9/index.d.ts", index: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/dom.iterable.generated.d.ts", to: "ts5.9/iterable.d.ts", autoImport: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/dom.asynciterable.generated.d.ts", to: "ts5.9/asynciterable.d.ts", autoImport: true, group: "ts5.9" }
     ],
   },
   {
@@ -26,8 +34,18 @@ export const packages = [
     description: "Types for the global scope of Service Workers",
     readme: "./readmes/serviceworker.md",
     files: [
-      { from: "../generated/serviceworker.generated.d.ts", to: "index.d.ts" },
-      { from: "../generated/serviceworker.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true  },
+      { from: "../generated/serviceworker.generated.d.ts", to: "index.d.ts", index: true },
+      { from: "../generated/serviceworker.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true },
+      { from: "../generated/serviceworker.asynciterable.generated.d.ts", to: "asynciterable.d.ts", autoImport: true },
+      { from: "../generated/ts5.5/serviceworker.generated.d.ts", to: "ts5.5/index.d.ts", index: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/serviceworker.iterable.generated.d.ts", to: "ts5.5/iterable.d.ts", autoImport: true , group: "ts5.5" },
+      { from: "../generated/ts5.5/serviceworker.asynciterable.generated.d.ts", to: "ts5.5/asynciterable.d.ts", autoImport: true , group: "ts5.5" },
+      { from: "../generated/ts5.6/serviceworker.generated.d.ts", to: "ts5.6/index.d.ts", index: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/serviceworker.iterable.generated.d.ts", to: "ts5.6/iterable.d.ts", autoImport: true , group: "ts5.6" },
+      { from: "../generated/ts5.6/serviceworker.asynciterable.generated.d.ts", to: "ts5.6/asynciterable.d.ts", autoImport: true , group: "ts5.6" },
+      { from: "../generated/ts5.9/serviceworker.generated.d.ts", to: "ts5.9/index.d.ts", index: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/serviceworker.iterable.generated.d.ts", to: "ts5.9/iterable.d.ts", autoImport: true , group: "ts5.9" },
+      { from: "../generated/ts5.9/serviceworker.asynciterable.generated.d.ts", to: "ts5.9/asynciterable.d.ts", autoImport: true , group: "ts5.9" }
     ],
   },
   {
@@ -35,8 +53,18 @@ export const packages = [
     description: "Types for the global scope of Audio Worklets",
     readme: "./readmes/audioworklet.md",
     files: [
-      { from: "../generated/audioworklet.generated.d.ts", to: "index.d.ts" },
-      { from: "../generated/audioworklet.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true  },
+      { from: "../generated/audioworklet.generated.d.ts", to: "index.d.ts", index: true },
+      { from: "../generated/audioworklet.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true },
+      { from: "../generated/audioworklet.asynciterable.generated.d.ts", to: "asynciterable.d.ts", autoImport: true },
+      { from: "../generated/ts5.5/audioworklet.generated.d.ts", to: "ts5.5/index.d.ts", index: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/audioworklet.iterable.generated.d.ts", to: "ts5.5/iterable.d.ts", autoImport: true , group: "ts5.5" },
+      { from: "../generated/ts5.5/audioworklet.asynciterable.generated.d.ts", to: "ts5.5/asynciterable.d.ts", autoImport: true , group: "ts5.5" },
+      { from: "../generated/ts5.6/audioworklet.generated.d.ts", to: "ts5.6/index.d.ts", index: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/audioworklet.iterable.generated.d.ts", to: "ts5.6/iterable.d.ts", autoImport: true , group: "ts5.6" },
+      { from: "../generated/ts5.6/audioworklet.asynciterable.generated.d.ts", to: "ts5.6/asynciterable.d.ts", autoImport: true , group: "ts5.6" },
+      { from: "../generated/ts5.9/audioworklet.generated.d.ts", to: "ts5.9/index.d.ts", index: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/audioworklet.iterable.generated.d.ts", to: "ts5.9/iterable.d.ts", autoImport: true , group: "ts5.9" },
+      { from: "../generated/ts5.9/audioworklet.asynciterable.generated.d.ts", to: "ts5.9/asynciterable.d.ts", autoImport: true , group: "ts5.9" }
     ],
   },
   {
@@ -44,10 +72,39 @@ export const packages = [
     description: "Types for the global scope of Shared Workers",
     readme: "./readmes/sharedworker.md",
     files: [
-      { from: "../generated/sharedworker.generated.d.ts", to: "index.d.ts" },
+      { from: "../generated/sharedworker.generated.d.ts", to: "index.d.ts", index: true },
       { from: "../generated/sharedworker.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true },
+      { from: "../generated/sharedworker.asynciterable.generated.d.ts", to: "asynciterable.d.ts", autoImport: true },
+      { from: "../generated/ts5.5/sharedworker.generated.d.ts", to: "ts5.5/index.d.ts", index: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/sharedworker.iterable.generated.d.ts", to: "ts5.5/iterable.d.ts", autoImport: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/sharedworker.asynciterable.generated.d.ts", to: "ts5.5/asynciterable.d.ts", autoImport: true, group: "ts5.5" },
+      { from: "../generated/ts5.6/sharedworker.generated.d.ts", to: "ts5.6/index.d.ts", index: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/sharedworker.iterable.generated.d.ts", to: "ts5.6/iterable.d.ts", autoImport: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/sharedworker.asynciterable.generated.d.ts", to: "ts5.6/asynciterable.d.ts", autoImport: true, group: "ts5.6" },
+      { from: "../generated/ts5.9/sharedworker.generated.d.ts", to: "ts5.9/index.d.ts", index: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/sharedworker.iterable.generated.d.ts", to: "ts5.9/iterable.d.ts", autoImport: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/sharedworker.asynciterable.generated.d.ts", to: "ts5.9/asynciterable.d.ts", autoImport: true, group: "ts5.9" }
     ],
   },
+  {
+    name: "@types/webworker",
+    description: "Types for the global scope of Web Workers",
+    readme: "./readmes/webworker.md",
+    files: [
+      { from: "../generated/webworker.generated.d.ts", to: "index.d.ts", index: true },
+      { from: "../generated/webworker.iterable.generated.d.ts", to: "iterable.d.ts", autoImport: true },
+      { from: "../generated/webworker.asynciterable.generated.d.ts", to: "asynciterable.d.ts", autoImport: true },
+      { from: "../generated/ts5.5/webworker.generated.d.ts", to: "ts5.5/index.d.ts", index: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/webworker.iterable.generated.d.ts", to: "ts5.5/iterable.d.ts", autoImport: true, group: "ts5.5" },
+      { from: "../generated/ts5.5/webworker.asynciterable.generated.d.ts", to: "ts5.5/asynciterable.d.ts", autoImport: true, group: "ts5.5" },
+      { from: "../generated/ts5.6/webworker.generated.d.ts", to: "ts5.6/index.d.ts", index: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/webworker.iterable.generated.d.ts", to: "ts5.6/iterable.d.ts", autoImport: true, group: "ts5.6" },
+      { from: "../generated/ts5.6/webworker.asynciterable.generated.d.ts", to: "ts5.6/asynciterable.d.ts", autoImport: true, group: "ts5.6" },
+      { from: "../generated/ts5.9/webworker.generated.d.ts", to: "ts5.9/index.d.ts", index: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/webworker.iterable.generated.d.ts", to: "ts5.9/iterable.d.ts", autoImport: true, group: "ts5.9" },
+      { from: "../generated/ts5.9/webworker.asynciterable.generated.d.ts", to: "ts5.9/asynciterable.d.ts", autoImport: true, group: "ts5.9" }
+    ]
+  }
 ];
 
 // Note: You can add 'version: "1.0.0"' to a package above
@@ -55,10 +112,10 @@ export const packages = [
 // the patch.
 
 import fs from "fs";
-import fetch from "node-fetch";
 import { fileURLToPath } from "url";
 import semver from "semver";
 import pkg from "prettier";
+import path from "path";
 const { format } = pkg;
 
 const go = async () => {
@@ -76,7 +133,9 @@ const go = async () => {
 
     // Migrate in the template files
     for (const templateFile of fs.readdirSync(templateDir)) {
-      if (templateFile.startsWith(".")) continue;
+      if (templateFile.startsWith(".")) {
+        continue;
+      }
 
       const templatedFile = new URL(templateFile, templateDir);
       fs.copyFileSync(templatedFile, new URL(templateFile, packagePath));
@@ -84,14 +143,13 @@ const go = async () => {
 
     // Add the reference files in the config above
     pkg.files.forEach((fileRef) => {
-      fs.copyFileSync(
-        new URL(fileRef.from, import.meta.url),
-        new URL(fileRef.to, packagePath),
-      );
+      const from = new URL(fileRef.from, import.meta.url);
+      const to = new URL(fileRef.to, packagePath);
+      fs.mkdirSync(new URL(".", to), { recursive: true });
+      fs.copyFileSync(from, to);
     });
 
     prependAutoImports(pkg, packagePath);
-    postProcessDTSFiles(pkg, packagePath);
 
     // Setup the files in the repo
     const newPkgJSON = await updatePackageJSON(pkg, packagePath);
@@ -109,7 +167,7 @@ const go = async () => {
 async function updatePackageJSON(pkg, packagePath) {
   const pkgJSONPath = new URL("package.json", packagePath);
   const packageText = fs.readFileSync(pkgJSONPath, "utf8");
-  /** @type {import("./template/package.json")} */
+  /** @type {typeof import("./template/package.json")} */
   const packageJSON = JSON.parse(packageText);
   packageJSON.name = pkg.name;
   packageJSON.description = pkg.description;
@@ -154,7 +212,7 @@ async function updatePackageJSON(pkg, packagePath) {
 /**
  * Copies the README and adds some rudimentary templating to the file.
  * @param {Package} pkg
- * @param {import("./template/package.json")} pkgJSON
+ * @param {typeof import("./template/package.json")} pkgJSON
  * @param {URL} writePath
  */
 function copyREADME(pkg, pkgJSON, writePath) {
@@ -179,40 +237,58 @@ function copyREADME(pkg, pkgJSON, writePath) {
  * @param {URL} packagePath
  */
 function prependAutoImports(pkg, packagePath) {
-  const index = new URL("index.d.ts", packagePath);
-  if (!fs.existsSync(index)) return;
+  /**
+   * @type {Map<string | undefined, typeof pkg.files[number][]>}
+   */
+  const groups = new Map();
+  for (const file of pkg.files) {
+    let files = groups.get(file.group);
+    if (!files) {
+      groups.set(file.group, (files = []));
+    }
+    files.push(file);
+  }
+  for (const files of groups.values()) {
+    const indexFile = files.find((file) => file.index);
+    if (!indexFile) {
+      continue;
+    }
 
-  const toPrepend = pkg.files
-    .filter((f) => !!f.autoImport)
-    .map((f) => `/// <reference path="./${f.to}" />`)
-    .join("\n");
+    const index = new URL(indexFile.to, packagePath);
+    if (!fs.existsSync(index)) {
+      continue;
+    }
 
-  let indexText = fs.readFileSync(index, "utf-8");
-  fs.writeFileSync(index, `${toPrepend}\n\n${indexText}`);
+    const toPrepend = files
+      .filter((f) => !!f.autoImport)
+      .map((f) => relativeUrl(index, new URL(f.to, packagePath)))
+      .map((f) => `/// <reference path="${f}" />`)
+      .join("\n");
+
+    if (toPrepend) {
+      const indexText = fs.readFileSync(index, "utf-8");
+      fs.writeFileSync(index, `${toPrepend}\n\n${indexText}`);
+    }
+  }
 }
 
 /**
- * Handles any post-processing we do for deployment.
- * @param {Package} pkg
- * @param {URL} packagePath
+ * @param {URL} from
+ * @param {URL} to
  */
-export function postProcessDTSFiles(pkg, packagePath) {
-  iterateThroughFiles((content) => {
-    return content.replace(
-      "abort(reason?: any): AbortSignal;",
-      "// abort(reason?: any): AbortSignal; - To be re-added in the future",
-    );
-  });
-
-  /** @param {(str:string) => string} contentReplacer */
-  function iterateThroughFiles(contentReplacer) {
-    pkg.files.forEach((fileRef) => {
-      const dtsFileURL = new URL(fileRef.to, packagePath);
-      let dtsContent = fs.readFileSync(dtsFileURL, "utf-8");
-      dtsContent = contentReplacer(dtsContent);
-      fs.writeFileSync(dtsFileURL, dtsContent);
-    });
+function relativeUrl(from, to) {
+  if (from.origin !== to.origin) {
+    return to.toString();
   }
+  if (!from.pathname.endsWith("/")) {
+    from = new URL("./", from);
+  }
+  const relative = path.posix.relative(from.pathname, to.pathname);
+  return path.isAbsolute(relative) ||
+    relative.startsWith("../") ||
+    relative.startsWith("./")
+    ? relative
+    : `./${relative}`;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

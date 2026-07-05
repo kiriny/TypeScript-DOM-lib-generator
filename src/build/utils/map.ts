@@ -8,11 +8,13 @@ export function addToArrayMap<T>(
   map.set(name, array);
 }
 
-export function addToStringMap(
-  map: Map<string, string>,
+export function addToNestedMap(
+  map: Map<string, Map<string, string>>,
   name: string,
+  key: string,
   value: string,
 ): void {
-  const old = map.get(name) || "";
-  map.set(name, `${old}\n${value}\n`);
+  const nested = map.get(name) ?? new Map();
+  nested.set(key, value);
+  map.set(name, nested);
 }

@@ -1,9 +1,11 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "esnext", // es2022
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "strict": true,
-    "resolveJsonModule": true
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true
   }
 }

@@ -1,9 +1,7 @@
-import * as Browser from "./types.js";
+import * as Browser from "./types.ts";
 
 // Extended types used but not defined in the spec
-export const bufferSourceTypes = new Set([
-  "ArrayBuffer",
-  "SharedArrayBuffer",
+export const arrayBufferViewTypes = new Set([
   "ArrayBufferView",
   "DataView",
   "Int8Array",
@@ -15,6 +13,11 @@ export const bufferSourceTypes = new Set([
   "Uint32Array",
   "Float32Array",
   "Float64Array",
+]);
+export const bufferSourceTypes = new Set([
+  "ArrayBuffer",
+  "SharedArrayBuffer",
+  ...arrayBufferViewTypes,
 ]);
 export const integerTypes = new Set([
   "byte",
@@ -53,6 +56,7 @@ const sameTypes = new Set([
   "PromiseLike",
   "undefined",
   "void",
+  "bigint",
 ]);
 export const baseTypeConversionMap = new Map<string, string>([
   ...[...bufferSourceTypes].map((type) => [type, type] as const),
@@ -67,6 +71,7 @@ export const baseTypeConversionMap = new Map<string, string>([
   ["record", "Record"],
   ["FrozenArray", "ReadonlyArray"],
   ["EventHandler", "EventHandler"],
+  ["ArrayBufferLike", "ArrayBufferLike"],
 ]);
 
 export function deepFilter<T>(
@@ -114,7 +119,14 @@ export function exposesTo(o: { exposed?: string }, target: string[]): boolean {
   return o.exposed.split(" ").some((e) => target.includes(e));
 }
 
-export function merge<T>(target: T, src: T, shallow?: boolean): T {
+export function merge<T>(
+  target: T,
+  src: T,
+  {
+    shallow = false,
+    optional = false,
+  }: { shallow?: boolean; optional?: boolean } = {},
+): T {
   if (typeof target !== "object" || typeof src !== "object") {
     return src;
   }
@@ -136,15 +148,15 @@ export function merge<T>(target: T, src: T, shallow?: boolean): T {
           ) {
             target[k] = srcProp;
           } else {
-            if (targetProp === srcProp && k !== "name") {
+            if (targetProp === srcProp && !["name", "mixin"].includes(k)) {
               console.warn(
                 `Redundant merge value ${targetProp} in ${JSON.stringify(src)}`,
               );
             }
-            target[k] = merge(targetProp, srcProp, shallow);
+            target[k] = merge(targetProp, srcProp, { shallow, optional });
           }
         }
-      } else {
+      } else if (!optional || typeof src[k] !== "object") {
         target[k] = src[k];
       }
     }
